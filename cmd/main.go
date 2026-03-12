@@ -2,11 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"github.com/ibraisi/chirpy/internal/api"
-	"github.com/ibraisi/chirpy/internal/database"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/ibraisi/chirpy/internal/api"
+	"github.com/ibraisi/chirpy/internal/database"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -39,6 +40,8 @@ func main() {
 
 	mux.Handle("GET /api/healthz", wrap(api.Readiness))
 	mux.Handle("POST /api/login", wrap(cfg.Login))
+	mux.Handle("POST /api/refresh", wrap(cfg.RefreshToken))
+	mux.Handle("POST /api/revoke", wrap(cfg.RevokeRefreshToken))
 	mux.Handle("POST /api/users", wrap(cfg.CreateUser))
 	mux.Handle("POST /api/chirps", wrap(cfg.CreateChirp))
 	mux.Handle("GET /api/chirps", wrap(cfg.GetChirps))

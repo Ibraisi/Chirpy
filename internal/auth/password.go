@@ -10,8 +10,6 @@ func HashPassword(password string) (string, error) {
 }
 
 func CheckPasswordHash(password, hash string) (bool, error) {
-	godump.Dump(password)
-	godump.Dump(hash)
 	ok, _, err := argon2id.CheckHash(password, hash)
 	godump.Dump(ok)
 	return ok, err
