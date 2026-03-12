@@ -65,17 +65,7 @@ func (cfg *Config) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *Config) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	token, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	userID, err := auth.ValidateJWT(token, cfg.SecretKey)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	userID := userIDFromCtx(r)
 
 	var req updateUserRequset
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

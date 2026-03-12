@@ -31,6 +31,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	wrap := func(h http.HandlerFunc) http.Handler { return api.LoggingMiddleware(h) }
+	authed := func(h http.HandlerFunc) http.Handler { return api.LoggingMiddleware(cfg.AuthMiddleware(h)) }
 
 	fileServer := http.StripPrefix("/app/", http.FileServer(http.Dir("../")))
 	mux.Handle("GET /app/", cfg.HitsMiddleware(fileServer))
@@ -43,12 +44,12 @@ func main() {
 	mux.Handle("POST /api/refresh", wrap(cfg.RefreshToken))
 	mux.Handle("POST /api/revoke", wrap(cfg.RevokeRefreshToken))
 	mux.Handle("POST /api/users", wrap(cfg.CreateUser))
-	mux.Handle("PUT /api/users", wrap(cfg.UpdateUser))
+	mux.Handle("PUT /api/users", authed(cfg.UpdateUser))
 
-	mux.Handle("POST /api/chirps", wrap(cfg.CreateChirp))
+	mux.Handle("POST /api/chirps", authed(cfg.CreateChirp))
 	mux.Handle("GET /api/chirps", wrap(cfg.GetChirps))
 	mux.Handle("GET /api/chirps/{chirpID}", wrap(cfg.GetChirpByID))
-	mux.Handle("DELETE /api/chirps/{chirpID}", wrap(cfg.DeleteChirpByID))
+	mux.Handle("DELETE /api/chirps/{chirpID}", authed(cfg.DeleteChirpByID))
 
 	server := &http.Server{Addr: ":8080", Handler: mux}
 	log.Fatal(server.ListenAndServe())

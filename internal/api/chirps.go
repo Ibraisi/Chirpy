@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ibraisi/chirpy/internal/auth"
 	"github.com/ibraisi/chirpy/internal/database"
 	"github.com/ibraisi/chirpy/pkg/utils"
 
@@ -54,17 +53,7 @@ func cleanBody(body string) string {
 }
 
 func (cfg *Config) CreateChirp(w http.ResponseWriter, r *http.Request) {
-	jwt, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	id, err := auth.ValidateJWT(jwt, cfg.SecretKey)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	id := userIDFromCtx(r)
 
 	var req chirpRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -123,17 +112,7 @@ func (cfg *Config) GetChirpByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *Config) DeleteChirpByID(w http.ResponseWriter, r *http.Request) {
-	jwt, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	userID, err := auth.ValidateJWT(jwt, cfg.SecretKey)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	userID := userIDFromCtx(r)
 
 	chirpID, err := uuid.Parse(r.PathValue("chirpID"))
 	if err != nil {
