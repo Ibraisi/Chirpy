@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/goforj/godump"
 )
 
 func Readiness(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +35,7 @@ func (cfg *Config) Reset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := cfg.DB.DeleteAllUsers(r.Context()); err != nil {
+		godump.Dump(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

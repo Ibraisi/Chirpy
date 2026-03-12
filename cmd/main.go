@@ -43,9 +43,12 @@ func main() {
 	mux.Handle("POST /api/refresh", wrap(cfg.RefreshToken))
 	mux.Handle("POST /api/revoke", wrap(cfg.RevokeRefreshToken))
 	mux.Handle("POST /api/users", wrap(cfg.CreateUser))
+	mux.Handle("PUT /api/users", wrap(cfg.UpdateUser))
+
 	mux.Handle("POST /api/chirps", wrap(cfg.CreateChirp))
 	mux.Handle("GET /api/chirps", wrap(cfg.GetChirps))
 	mux.Handle("GET /api/chirps/{chirpID}", wrap(cfg.GetChirpByID))
+	mux.Handle("DELETE /api/chirps/{chirpID}", wrap(cfg.DeleteChirpByID))
 
 	server := &http.Server{Addr: ":8080", Handler: mux}
 	log.Fatal(server.ListenAndServe())

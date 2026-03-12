@@ -3,16 +3,22 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"net/http"
+	"time"
+
 	"github.com/ibraisi/chirpy/internal/auth"
 	"github.com/ibraisi/chirpy/internal/database"
 	"github.com/ibraisi/chirpy/pkg/utils"
-	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 )
 
 type createUserRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type updateUserRequset struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -56,4 +62,45 @@ func (cfg *Config) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ResponseWithJSON(w, http.StatusCreated, userFromDB(user))
+}
+
+func (cfg *Config) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(token, cfg.SecretKey)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	var req updateUserRequset
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.ResponseWithJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+
+	hashed, err := auth.HashPassword(req.Password)
+	if err != nil {
+		utils.ResponseWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to process password"})
+		return
+	}
+
+	user, err := cfg.DB.UpdateUser(r.Context(), database.UpdateUserParams{
+		Email: sql.NullString{
+			String: req.Email,
+			Valid:  true,
+		},
+		HashedPassword: hashed,
+		ID:             userID,
+	})
+	if err != nil {
+		utils.ResponseWithJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		return
+	}
+
+	utils.ResponseWithJSON(w, http.StatusOK, userFromDB(user))
 }

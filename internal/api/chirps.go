@@ -3,12 +3,13 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/ibraisi/chirpy/internal/auth"
-	"github.com/ibraisi/chirpy/internal/database"
-	"github.com/ibraisi/chirpy/pkg/utils"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/ibraisi/chirpy/internal/auth"
+	"github.com/ibraisi/chirpy/internal/database"
+	"github.com/ibraisi/chirpy/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -119,4 +120,43 @@ func (cfg *Config) GetChirpByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ResponseWithJSON(w, http.StatusOK, chirpFromDB(chirp))
+}
+
+func (cfg *Config) DeleteChirpByID(w http.ResponseWriter, r *http.Request) {
+	jwt, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(jwt, cfg.SecretKey)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	chirpID, err := uuid.Parse(r.PathValue("chirpID"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	chirp, err := cfg.DB.GetAllChirpsByID(r.Context(), chirpID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	if chirp.UserID.UUID != userID {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	err = cfg.DB.DeleteChirpsByID(r.Context(), chirpID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
