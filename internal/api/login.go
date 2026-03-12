@@ -18,17 +18,14 @@ type loginRequest struct {
 	Password string `json:"password"`
 }
 
-type refreshTokenRes struct {
+type refreshTokenResponse struct {
 	Token string `json:"token"`
 }
 
 type loginResponse struct {
-	ID           uuid.UUID `json:"id"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	Email        string    `json:"email"`
-	Token        string    `json:"token"`
-	RefreshToken string    `json:"refresh_token"`
+	userResponse
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func (cfg *Config) Login(w http.ResponseWriter, r *http.Request) {
@@ -74,10 +71,7 @@ func (cfg *Config) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.ResponseWithJSON(w, http.StatusOK, loginResponse{
-		ID:           user.ID,
-		CreatedAt:    user.CreatedAt.Time,
-		UpdatedAt:    user.UpdatedAt.Time,
-		Email:        user.Email.String,
+		userResponse: userFromDB(user),
 		Token:        token,
 		RefreshToken: refreshToken,
 	})
@@ -107,7 +101,7 @@ func (cfg *Config) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.ResponseWithJSON(w, http.StatusOK, refreshTokenRes{
+	utils.ResponseWithJSON(w, http.StatusOK, refreshTokenResponse{
 		Token: newToken,
 	})
 

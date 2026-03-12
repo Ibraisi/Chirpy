@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/ibraisi/chirpy/internal/database"
 	"sync/atomic"
+
+	"github.com/ibraisi/chirpy/internal/database"
 )
 
 type Config struct {
@@ -10,4 +11,5 @@ type Config struct {
 	DB        *database.Queries
 	Platform  string
 	SecretKey string
+	PolkaKey  string
 }

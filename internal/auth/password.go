@@ -2,7 +2,6 @@ package auth
 
 import (
 	"github.com/alexedwards/argon2id"
-	"github.com/goforj/godump"
 )
 
 func HashPassword(password string) (string, error) {
@@ -11,6 +10,5 @@ func HashPassword(password string) (string, error) {
 
 func CheckPasswordHash(password, hash string) (bool, error) {
 	ok, _, err := argon2id.CheckHash(password, hash)
-	godump.Dump(ok)
 	return ok, err
 }

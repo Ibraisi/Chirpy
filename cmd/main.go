@@ -27,6 +27,7 @@ func main() {
 		DB:        database.New(db),
 		Platform:  os.Getenv("PLATFORM"),
 		SecretKey: os.Getenv("SECRET_KEY"),
+		PolkaKey:  os.Getenv("POLKA_KEY"),
 	}
 
 	mux := http.NewServeMux()
@@ -50,6 +51,8 @@ func main() {
 	mux.Handle("GET /api/chirps", wrap(cfg.GetChirps))
 	mux.Handle("GET /api/chirps/{chirpID}", wrap(cfg.GetChirpByID))
 	mux.Handle("DELETE /api/chirps/{chirpID}", authed(cfg.DeleteChirpByID))
+
+	mux.Handle("POST /api/polka/webhooks", wrap(cfg.UpgradeUser))
 
 	server := &http.Server{Addr: ":8080", Handler: mux}
 	log.Fatal(server.ListenAndServe())

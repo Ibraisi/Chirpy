@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -82,16 +83,35 @@ func (cfg *Config) CreateChirp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *Config) GetChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.DB.GetAllChirps(r.Context())
+	var (
+		chirps []database.Chirp
+		err    error
+	)
+
+	if authorID := r.URL.Query().Get("author_id"); authorID != "" {
+		id, parseErr := uuid.Parse(authorID)
+		if parseErr != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		chirps, err = cfg.DB.GetAllChirpsByUser(r.Context(), uuid.NullUUID{UUID: id, Valid: true})
+	} else {
+		chirps, err = cfg.DB.GetAllChirps(r.Context())
+	}
 	if err != nil {
 		utils.ResponseWithJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch chirps"})
 		return
 	}
 
-	res := make([]chirpResponse, 0, len(chirps))
-	for _, c := range chirps {
-		res = append(res, chirpFromDB(c))
+	res := make([]chirpResponse, len(chirps))
+	for i, c := range chirps {
+		res[i] = chirpFromDB(c)
 	}
+
+	if r.URL.Query().Get("sort") == "desc" {
+		slices.Reverse(res)
+	}
+
 	utils.ResponseWithJSON(w, http.StatusOK, res)
 }
 
